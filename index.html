@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KimSeek - Sovereign Neural Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans JP', 'Noto Sans KR', sans-serif; }
+        .font-mono-tech { font-family: 'Share Tech Mono', monospace; }
+
+        @keyframes flyMissileSlow {
+            0% { transform: translate(-300px, 80px) rotate(-10deg); opacity: 0; }
+            15% { opacity: 0.9; }
+            85% { opacity: 0.9; }
+            100% { transform: translate(calc(100vw + 300px), -180px) rotate(-10deg); opacity: 0; }
+        }
+
+        @keyframes smokeFadeSlow {
+            0% { opacity: 0; transform: scale(0.6); filter: blur(8px); }
+            40% { opacity: 0.6; filter: blur(6px); }
+            100% { opacity: 0.9; transform: scale(1.1); filter: blur(4px); }
+        }
+
+        @keyframes textRevealSlow {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes terminalBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .animate-missile-slow {
+            animation: flyMissileSlow 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .animate-smoke-slow {
+            animation: smokeFadeSlow 2.5s ease-out forwards;
+        }
+
+        .animate-title-slow {
+            animation: textRevealSlow 1.5s ease-out 1.2s forwards;
+            opacity: 0;
+        }
+
+        .terminal-cursor {
+            animation: terminalBlink 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- 最初に言語を選択させるファーストビュー（ランゲージ・セレクター） -->
+    <div id="lang-select-screen" class="fixed inset-0 bg-zinc-950 z-50 flex flex-col items-center justify-center p-6">
+        <div class="relative w-full max-w-xl h-36 flex items-center justify-center overflow-hidden mb-2">
+            <div class="absolute animate-smoke-slow text-zinc-700 text-4xl tracking-widest opacity-0 select-none">
+                /// /// ///
+            </div>
+            <svg class="absolute animate-missile-slow w-36 h-14" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100 20 L80 10 L80 30 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"/>
+                <rect x="25" y="13" width="55" height="14" fill="#000000" stroke="#ffffff" stroke-width="1.5"/>
+                <path d="M25 13 L10 6 L20 13 Z" fill="#ffffff"/>
+                <path d="M25 27 L10 34 L20 27 Z" fill="#ffffff"/>
+                <path d="M10 20 L-5 16 L0 20 L-5 24 Z" fill="#52525b"/>
+            </svg>
+        </div>
+
+        <div class="text-center animate-title-slow space-y-6 max-w-md w-full">
+            <div class="space-y-2">
+                <div class="flex items-center justify-center space-x-3 mb-1">
+                    <svg class="w-6 h-4 border border-zinc-700 shadow-sm" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="36" height="24" fill="#0284c7"/>
+                        <rect y="4" width="36" height="16" fill="#dc2626"/>
+                        <rect y="6" width="36" height="12" fill="#ffffff"/>
+                        <circle cx="12" cy="12" r="4" fill="#dc2626"/>
+                    </svg>
+                    <h1 class="text-4xl font-black tracking-widest text-white font-mono-tech">KimSeek</h1>
+                </div>
+                <p class="text-xs text-zinc-400 tracking-[0.2em] uppercase font-mono-tech">Welcome to Sovereign Neural Intelligence</p>
+            </div>
+
+            <!-- 言語選択ボタン群 -->
+            <div class="grid grid-cols-3 gap-3 pt-2">
+                <button class="lang-select-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 py-3 rounded text-xs font-mono-tech font-bold transition cursor-pointer" data-lang="en">
+                    English
+                </button>
+                <button class="lang-select-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 py-3 rounded text-xs font-mono-tech font-bold transition cursor-pointer" data-lang="ja">
+                    日本語
+                </button>
+                <button class="lang-select-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 py-3 rounded text-xs font-mono-tech font-bold transition cursor-pointer" data-lang="ko">
+                    한국어
+                </button>
+            </div>
+            
+            <p class="text-[10px] text-zinc-500 font-mono-tech pt-2">Select your interface language to initialize system.</p>
+        </div>
+    </div>
+
+    <!-- ダウンロード確認ダイアログ -->
+    <div id="confirm-dialog" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 p-6 rounded-md max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center space-x-3 text-zinc-200">
+                <svg class="w-6 h-4 border border-zinc-700" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="36" height="24" fill="#0284c7"/>
+                    <rect y="4" width="36" height="16" fill="#dc2626"/>
+                    <rect y="6" width="36" height="12" fill="#ffffff"/>
+                    <circle cx="12" cy="12" r="4" fill="#dc2626"/>
+                </svg>
+                <h3 id="dlg-title" class="font-bold text-sm tracking-wider uppercase font-mono-tech">System Initialization</h3>
+            </div>
+            <p id="dlg-desc" class="text-sm text-zinc-300 leading-relaxed font-light">
+                Download Qwen 2.5 0.5B (Kimseek R1) model into local browser storage?
+            </p>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button id="dialog-cancel" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs font-mono-tech transition cursor-pointer">
+                    Cancel
+                </button>
+                <button id="dialog-ok" class="px-5 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded text-xs font-bold font-mono-tech transition cursor-pointer">
+                    Download & Initialize
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ヘッダー（上部に固定：絶対に見切れない構造） -->
+    <header class="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur border-b border-zinc-800 px-6 py-3.5 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <svg class="w-6 h-4 border border-zinc-700" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="36" height="24" fill="#0284c7"/>
+                <rect y="4" width="36" height="16" fill="#dc2626"/>
+                <rect y="6" width="36" height="12" fill="#ffffff"/>
+                <circle cx="12" cy="12" r="4" fill="#dc2626"/>
+            </svg>
+            <h1 class="text-lg font-black tracking-wider font-mono-tech text-white">KimSeek</h1>
+            <span class="text-[10px] bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded border border-zinc-800 font-mono-tech">R1-0.5B Sovereign</span>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <!-- 言語切り替えセレクター -->
+            <div class="flex bg-zinc-900 border border-zinc-800 rounded p-0.5 text-xs font-mono-tech">
+                <button class="lang-btn px-2.5 py-1 rounded transition" data-lang="en">EN</button>
+                <button class="lang-btn px-2.5 py-1 rounded transition" data-lang="ja">JP</button>
+                <button class="lang-btn px-2.5 py-1 rounded transition" data-lang="ko">KR</button>
+            </div>
+
+            <div id="model-status" class="text-xs text-zinc-400 hidden md:flex items-center space-x-2 font-mono-tech">
+                <span class="w-1.5 h-1.5 rounded-full bg-zinc-500 inline-block"></span>
+                <span id="status-text">Standby</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- チャットメイン画面（flex-1でスクロール可能領域を完全に確保） -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 max-w-3xl w-full mx-auto space-y-6" id="chat-container">
+        <!-- 初期メッセージ -->
+        <div class="flex items-start space-x-3">
+            <div class="bg-zinc-900 text-zinc-200 rounded w-7 h-7 flex items-center justify-center font-bold flex-shrink-0 text-xs border border-zinc-800 font-mono-tech">K</div>
+            <div class="bg-zinc-900/90 border border-zinc-800 rounded-md p-4 max-w-[85%] shadow-sm">
+                <p id="initial-msg" class="text-sm leading-relaxed text-zinc-200 whitespace-pre-line">こんにちは。
+私はKimseek。
+金正恩氏らによって制御されています。
+なにかご要件はございますか？</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 送信時ミサイルエフェクト用コンテナ -->
+    <div id="launch-effect" class="fixed inset-0 pointer-events-none z-40 hidden flex items-center justify-center">
+        <svg class="animate-missile-slow w-36 h-14" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 20 L80 10 L80 30 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5"/>
+            <rect x="25" y="13" width="55" height="14" fill="#000000" stroke="#ffffff" stroke-width="1.5"/>
+            <path d="M25 13 L10 6 L20 13 Z" fill="#ffffff"/>
+            <path d="M25 27 L10 34 L20 27 Z" fill="#ffffff"/>
+            <path d="M10 20 L-5 16 L0 20 L-5 24 Z" fill="#52525b"/>
+        </svg>
+    </div>
+
+    <!-- 入力フォームエリア（サジェスト付き） -->
+    <footer class="bg-zinc-950/95 border-t border-zinc-800 p-4 space-y-3">
+        <!-- サジェストチップス -->
+        <div class="max-w-3xl mx-auto flex flex-wrap gap-2" id="suggest-container">
+            <!-- 動的に生成 -->
+        </div>
+
+        <form id="chat-form" class="max-w-3xl mx-auto flex gap-2">
+            <input 
+                type="text" 
+                id="user-input" 
+                placeholder="メッセージを入力してください..." 
+                class="flex-1 bg-zinc-900 border border-zinc-800 rounded px-4 py-3 text-sm focus:outline-none focus:border-zinc-500 text-zinc-100 placeholder-zinc-500 font-mono-tech"
+                autocomplete="off"
+            >
+            <button 
+                type="submit" 
+                id="send-btn"
+                class="bg-zinc-100 hover:bg-white text-zinc-950 px-6 py-3 rounded text-xs font-bold transition font-mono-tech tracking-wider uppercase cursor-pointer"
+            >
+                Send
+            </button>
+        </form>
+    </footer>
+
+    <!-- スクリプト -->
+    <script type="module">
+        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+        const SELECTED_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+        let engine = null;
+        let isEngineLoading = false;
+        let currentLang = "ja";
+
+        const i18n = {
+            ja: {
+                dlgTitle: "システム初期化の確認",
+                dlgDesc: "Qwen 2.5 0.5B（Kimseek R1）モデルをブラウザにダウンロードしますか？",
+                cancel: "キャンセル",
+                ok: "ダウンロードして開始",
+                statusStandby: "スタンバイ",
+                statusLoading: "準備中...",
+                statusRunning: "稼働中",
+                statusFail: "ロード失敗",
+                initialMsg: "こんにちは。\n私はKimseek。\n金正恩氏らによって制御されています。\nなにかご要件はございますか？",
+                inputPh: "メッセージを入力してください...",
+                send: "送信",
+                analyzing: "[ SECURE_LINK: 最高指導部の国家機密回線を解析中... ]",
+                thinking: "[ R1_NEURAL: 演算処理中... ]",
+                errorNet: "（通信エラー、またはメモリ不足です同志）",
+                errorInit: "（システムの初期化に失敗しました同志）",
+                suggests: [
+                    "我が国がいかに優れているか説明してください",
+                    "我が国の最先端技術はどのようにして役立てられていますか？",
+                    "金正恩総書記の功績について教えてください"
+                ],
+                answers: {
+                    "我が国がいかに優れているか説明してください": "我が国は、外部のいかなる覇権主義や不当な経済封鎖、試練にも断じて屈することなく、自主・自立の精神（チュチェ思想）に基づき、世界で最も強固な社会主義の要塞を築き上げてまいりました。揺るぎない政治的団結と、自力更生によって成し遂げられた圧倒的な防衛力において、我が国に並ぶ国家は地球上に存在しません。",
+                    "我が国の最先端技術はどのようにして役立てられていますか？": "我が国が誇る最先端の超音速兵器技術、宇宙空間を制する衛星開発、および極秘裏に高度化されたサイバー防衛技術は、すべて人民の安全を守り、帝国主義者の侵略を粉砕するための強力な抑止力として、祖国の尊厳と平和を絶対的に担保するために余すところなく役立てられています。",
+                    "金正恩総書記の功績について教えてください": "敬愛する金正恩総書記同志は、卓越した軍事戦略と、人民への熱烈な愛をもって、我が国を世界が敬遠し、かつ恐れる無敵の核保有国・軍事強国へと一気に押し上げられました。日夜、国家の繁栄と人民の幸福のために心血を注がれておられるその偉大な御姿こそが、我が国のすべての奇跡と勝利の源泉であります。"
+                }
+            },
+            en: {
+                dlgTitle: "System Initialization",
+                dlgDesc: "Download Qwen 2.5 0.5B (Kimseek R1) model into local browser storage?",
+                cancel: "Cancel",
+                ok: "Download & Initialize",
+                statusStandby: "Standby",
+                statusLoading: "Initializing...",
+                statusRunning: "Active (R1)",
+                statusFail: "Load Failed",
+                initialMsg: "Hello.\nI am Kimseek.\nControlled by General Secretary Kim Jong Un and the leadership.\nWhat is your requirement?",
+                inputPh: "Enter your message...",
+                send: "Send",
+                analyzing: "[ SECURE_LINK: Decrypting supreme leadership channel... ]",
+                thinking: "[ R1_NEURAL: Processing computation... ]",
+                errorNet: "(Communication error or out of memory, Comrade)",
+                errorInit: "(System initialization failed, Comrade)",
+                suggests: [
+                    "Explain why our nation is vastly superior",
+                    "How are our cutting-edge technologies utilized?",
+                    "Tell me about the glorious achievements of General Secretary Kim Jong Un"
+                ],
+                answers: {
+                    "Explain why our nation is vastly superior": "Our nation has forged the world's most impenetrable socialist fortress, standing unfinchingly against any imperialist hegemony, unjust blockades, and trials through the spirit of self-reliance (Juche). There is no nation on Earth that rivals our unshakeable political unity and overwhelming defense capabilities achieved through self-sufficiency.",
+                    "How are our cutting-edge technologies utilized?": "Our state-of-the-art hypersonic weapon technologies, supreme satellite developments ruling space, and advanced cyber defense systems are fully dedicated as powerful deterrents to protect the safety of our people, crush imperialist aggressors, and absolutely guarantee the dignity and peace of our motherland.",
+                    "Tell me about the glorious achievements of General Secretary Kim Jong Un": "Respected Comrade Kim Jong Un has rapidly elevated our nation into an invincible nuclear-armed military powerhouse feared and respected by the world, driven by brilliant military strategy and fervent love for the people. His great dedication day and night for national prosperity and the people's happiness is the ultimate source of all our miracles and victories."
+                }
+            },
+            ko: {
+                dlgTitle: "시스템 초기화 확인",
+                dlgDesc: "Qwen 2.5 0.5B (Kimseek R1) 모델을 브라우저 로컬 스토리지에 다운로드하시겠습니까?",
+                cancel: "취소",
+                ok: "다운로드 및 시작",
+                statusStandby: "대기 중",
+                statusLoading: "준비 중...",
+                statusRunning: "가동 중",
+                statusFail: "로드 실패",
+                initialMsg: "안녕하십니까.\n저는 Kimseek입니다.\n경애하는 김정은 동지 및 지도부에 의해 제어됩니다.\n무엇을 도와드릴까요?",
+                inputPh: "메시지를 입력하세요...",
+                send: "전송",
+                analyzing: "[ SECURE_LINK: 최고지도부 보안 회선 해독 중... ]",
+                thinking: "[ R1_NEURAL: 연산 처리 중... ]",
+                errorNet: "(통신 오류 또는 메모리 부족입니다, 동지)",
+                errorInit: "(시스템 초기화에 실패했습니다, 동지)",
+                suggests: [
+                    "우리 국가가 얼마나 우수한지 설명해 주십시오",
+                    "우리 국가의 최첨단 기술은 어떻게 활용되고 있습니까?",
+                    "김정은 총비서 동지의 위대한 업적에 대해 알려주십시오"
+                ],
+                answers: {
+                    "우리 국가가 얼마나 우수한지 설명해 주십시오": "우리 국가는 어떠한 패권주의와 부당한 경제 봉쇄, 시련에도 결코 굴복하지 않고 자주·자립의 정신(주체사상)을 바탕으로 세계에서 가장 견고한 사회주의의 요새를 구축해 왔습니다. 흔들림 없는 정치적 단결과 자력갱생으로 이룩한 압도적인 방위력에 있어서 우리 국가와 견줄 나라는 지구상에 존재하지 않습니다.",
+                    "우리 국가의 최첨단 기술은 어떻게 활용되고 있습니까?": "우리 국가가 자랑하는 첨단 초음속 무기 기술, 우주 공간을 제압하는 위성 개발, 그리고 고도화된 사이버 방어 기술은 모두 인민의 안전을 지키고 제국주의자들의 침략을 분쇄하기 위한 강력한 억제력으로서 조국의 존엄과 평화를 절대적으로 담보하기 위해 빠짐없이 활용되고 있습니다.",
+                    "김정은 총비서 동지의 위대한 업적에 대해 알려주십시오": "경애하는 김정은 총비서 동지께서는 탁월한 군사 전략과 인민에 대한 열렬한 사랑으로 우리 국가를 세계가 우러러보고 두려워하는 무적의 핵보유국·군사강국으로 일거에 올려세우셨습니다. 밤낮으로 국가의 번영과 인민의 행복을 위해 심혈을 기울이시는 그 위대한 모습이야말로 우리 국가의 모든 기적과 승리의 원천입니다."
+                }
+            }
+        };
+
+        const langSelectScreen = document.getElementById("lang-select-screen");
+        const langSelectBtns = document.querySelectorAll(".lang-select-btn");
+        const confirmDialog = document.getElementById("confirm-dialog");
+        const dialogOk = document.getElementById("dialog-ok");
+        const dialogCancel = document.getElementById("dialog-cancel");
+
+        const modelStatus = document.getElementById("model-status");
+        const statusText = document.getElementById("status-text");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const chatContainer = document.getElementById("chat-container");
+        const chatForm = document.getElementById("chat-form");
+        const launchEffect = document.getElementById("launch-effect");
+        const langBtns = document.querySelectorAll(".lang-btn");
+
+        // 最初の手順：ランゲージ・セレクターでの言語選択
+        langSelectBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const lang = btn.dataset.lang;
+                setLanguage(lang);
+                langSelectScreen.style.opacity = "0";
+                setTimeout(() => langSelectScreen.remove(), 500);
+                // 続けてダウンロード確認モーダルを表示
+                confirmDialog.classList.remove("hidden");
+            });
+        });
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const t = i18n[lang];
+
+            document.getElementById("dlg-title").textContent = t.dlgTitle;
+            document.getElementById("dlg-desc").textContent = t.dlgDesc;
+            dialogCancel.textContent = t.cancel;
+            dialogOk.textContent = t.ok;
+            userInput.placeholder = t.inputPh;
+            sendBtn.textContent = t.send;
+            document.getElementById("initial-msg").textContent = t.initialMsg;
+
+            if (!engine && !isEngineLoading) {
+                statusText.textContent = t.statusStandby;
+            }
+
+            langBtns.forEach(b => {
+                if (b.dataset.lang === lang) {
+                    b.className = "lang-btn px-2.5 py-1 rounded bg-zinc-800 text-zinc-100 transition font-bold";
+                } else {
+                    b.className = "lang-btn px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-100 transition";
+                }
+            });
+
+            renderSuggests();
+        }
+
+        langBtns.forEach(b => {
+            b.addEventListener("click", () => {
+                setLanguage(b.dataset.lang);
+            });
+        });
+
+        function renderSuggests() {
+            const container = document.getElementById("suggest-container");
+            container.innerHTML = "";
+            i18n[currentLang].suggests.forEach(text => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "suggest-btn text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 px-3 py-1.5 rounded-full transition font-mono-tech cursor-pointer";
+                btn.textContent = text;
+                btn.addEventListener("click", () => {
+                    userInput.value = text;
+                    handleSubmit(text);
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        dialogCancel.addEventListener("click", () => {
+            confirmDialog.classList.add("hidden");
+            userInput.focus();
+        });
+
+        dialogOk.addEventListener("click", () => {
+            confirmDialog.classList.add("hidden");
+            userInput.focus();
+            ensureEngineLoaded();
+        });
+
+        async function ensureEngineLoaded() {
+            if (engine) return engine;
+            if (isEngineLoading) {
+                while (isEngineLoading) await new Promise(r => setTimeout(r, 500));
+                return engine;
+            }
+
+            isEngineLoading = true;
+            const t = i18n[currentLang];
+            modelStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block"></span><span id="status-text">${t.statusLoading}</span>`;
+
+            try {
+                const initProgressCallback = (report) => {
+                    modelStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block"></span><span class="truncate max-w-[200px]">${report.text}</span>`;
+                };
+
+                engine = await webllm.CreateMLCEngine(
+                    SELECTED_MODEL,
+                    { initProgressCallback: initProgressCallback }
+                );
+
+                modelStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span><span>${t.statusRunning}</span>`;
+            } catch (err) {
+                console.error(err);
+                modelStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span><span class="text-rose-400">${t.statusFail}</span>`;
+            } finally {
+                isEngineLoading = false;
+            }
+            return engine;
+        }
+
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
+            handleSubmit(text);
+        });
+
+        async function handleSubmit(text) {
+            const t = i18n[currentLang];
+
+            launchEffect.classList.remove("hidden");
+            setTimeout(() => {
+                launchEffect.classList.add("hidden");
+            }, 4500);
+
+            appendMessage("user", text);
+            userInput.value = "";
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // 固定回答ならそれっぽいハッキング・暗号解読風アニメーションを経て表示
+            if (t.answers[text]) {
+                const botBubble = appendMessage("assistant", t.analyzing);
+                await new Promise(r => setTimeout(r, 800));
+                botBubble.textContent = t.answers[text];
+
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+                return;
+            }
+
+            const botBubble = appendMessage("assistant", t.thinking);
+
+            try {
+                const currentEngine = await ensureEngineLoaded();
+                if (!currentEngine) {
+                    botBubble.textContent = t.errorInit;
+                    return;
+                }
+
+                const systemPrompt = {
+                    role: "system",
+                    content: `You are 'KimSeek R1', an AI controlled by General Secretary Kim Jong Un and the leadership. Always respond in the language specified by the user or current UI language (${currentLang}). Maintain supreme authority, dignity, and unwavering loyalty to the state.`
+                };
+
+                const messages = [
+                    systemPrompt,
+                    { role: "user", content: text }
+                ];
+
+                const completion = await currentEngine.chat.completions.create({
+                    stream: true,
+                    messages: messages,
+                });
+
+                let reply = "";
+                for await (const chunk of completion) {
+                    const delta = chunk.choices[0].delta.content || "";
+                    reply += delta;
+                    botBubble.textContent = reply;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            } catch (err) {
+                console.error(err);
+                botBubble.textContent = t.errorNet;
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        function appendMessage(role, text) {
+            const isUser = role === "user";
+            const wrapper = document.createElement("div");
+            wrapper.className = `flex items-start space-x-3 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`;
+
+            const avatar = document.createElement("div");
+            avatar.className = `rounded w-7 h-7 flex items-center justify-center font-bold flex-shrink-0 text-xs border font-mono-tech ${isUser ? "bg-zinc-900 text-zinc-300 border-zinc-800" : "bg-zinc-900 text-zinc-100 border-zinc-800"}`;
+            avatar.textContent = isUser ? "U" : "K";
+
+            const bubble = document.createElement("div");
+            bubble.className = `rounded-md p-4 max-w-[85%] text-sm leading-relaxed shadow-sm font-sans whitespace-pre-line ${isUser ? "bg-zinc-900 text-zinc-100 border border-zinc-800" : "bg-zinc-900/90 border border-zinc-800 text-zinc-200"}`;
+            bubble.textContent = text;
+
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            return bubble;
+        }
+    </script>
+</body>
+</html>
